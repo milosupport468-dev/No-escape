@@ -7,16 +7,14 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-}
-
-html {
     scroll-behavior: smooth;
 }
 
 body {
-    background: #080a0f;
-    color: #ffffff;
+    background: #08090d;
+    color: #f5f5f5;
     font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.6;
 }
 
 /* ENCABEZADO */
@@ -26,344 +24,297 @@ body {
     min-height: 75px;
     padding: 15px 6%;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
     gap: 20px;
-    background: #0d1018;
-    border-bottom: 1px solid #292d38;
+    flex-wrap: wrap;
+    background: #10131b;
+    border-bottom: 1px solid #252b38;
     position: sticky;
     top: 0;
     z-index: 100;
 }
 
 .logo {
-    font-size: 24px;
+    font-size: 25px;
     font-weight: 900;
+    color: white;
     letter-spacing: 2px;
 }
 
-.logo span,
-.hero h1 span {
-    color: #e52e38;
+.logo span {
+    color: #e63946;
 }
 
 nav {
     display: flex;
-    gap: 25px;
+    gap: 22px;
+    flex-wrap: wrap;
 }
 
 nav a {
-    color: #cccccc;
+    color: #cbd5e1;
     text-decoration: none;
     font-size: 14px;
     transition: 0.3s;
 }
 
 nav a:hover {
-    color: #ff3945;
+    color: #ff3548;
 }
+
+/* BOTONES */
 
 button {
     cursor: pointer;
-    border: none;
     font-weight: bold;
     transition: 0.3s;
 }
 
 .login-btn {
-    background: #252a36;
+    background: transparent;
     color: white;
-    padding: 12px 18px;
-    border-radius: 6px;
+    border: 1px solid #e63946;
+    border-radius: 7px;
+    padding: 10px 16px;
 }
 
 .login-btn:hover {
-    background: #e52e38;
+    background: #e63946;
+}
+
+.main-btn {
+    background: linear-gradient(100deg, #d71932, #f04444);
+    color: white;
+    border: none;
+    border-radius: 7px;
+    padding: 15px 25px;
+    margin-top: 25px;
+    box-shadow: 0 0 20px #e6394650;
+}
+
+.main-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 30px #e6394680;
 }
 
 /* PORTADA */
 
 .hero {
     min-height: 570px;
+    padding: 100px 8%;
     display: flex;
     align-items: center;
-    padding: 70px 9%;
-    position: relative;
-    overflow: hidden;
-
     background:
-        linear-gradient(
-            90deg,
-            rgba(5, 7, 12, 0.98),
-            rgba(5, 7, 12, 0.78),
-            rgba(5, 7, 12, 0.35)
-        ),
-        linear-gradient(135deg, #171d2a, #300e16);
-}
-
-.hero::after {
-    content: "";
-    position: absolute;
-    width: 350px;
-    height: 350px;
-    right: 8%;
-    top: 20%;
-    background: #a51d2a;
-    filter: blur(150px);
-    opacity: 0.2;
+        linear-gradient(90deg, #08090df2, #08090d90),
+        radial-gradient(circle at 80% 50%, #142b4b, #08090d 65%);
+    border-bottom: 1px solid #252b38;
 }
 
 .hero-content {
-    max-width: 650px;
-    position: relative;
-    z-index: 2;
-    animation: appear 1s ease;
+    max-width: 720px;
 }
 
 .tag {
-    color: #ff505a;
-    font-size: 12px;
+    color: #ff4355;
+    font-size: 13px;
     font-weight: bold;
     letter-spacing: 3px;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
 }
 
 .hero h1 {
     font-size: clamp(55px, 10vw, 100px);
+    line-height: 1.1;
     font-weight: 900;
     letter-spacing: -4px;
-    line-height: 1;
-    margin-bottom: 20px;
+}
+
+.hero h1 span {
+    color: #e63946;
+    text-shadow: 0 0 30px #e6394660;
 }
 
 .hero h2 {
-    font-size: 19px;
-    margin-bottom: 18px;
-    color: #ff5962;
+    font-size: clamp(19px, 3vw, 28px);
+    margin: 20px 0;
+    color: #dce5f2;
 }
 
-.hero p {
-    color: #c2c5cc;
-    line-height: 1.7;
-    margin-bottom: 25px;
-}
-
-/* BOTONES */
-
-.main-btn {
-    background: #e52e38;
-    color: white;
-    padding: 16px 25px;
-    border-radius: 5px;
-    letter-spacing: 1px;
-    box-shadow: 0 5px 25px #e52e3840;
-}
-
-.main-btn:hover {
-    background: #ff4650;
-    transform: translateY(-3px);
+.hero p:not(.tag) {
+    color: #aeb9ca;
+    font-size: 17px;
 }
 
 /* PROGRESO */
 
 .progress-section {
-    padding: 85px 10%;
+    padding: 85px 8%;
     text-align: center;
-    background: #10141e;
+    background: #0d111a;
 }
 
 .progress-section h2,
-.features h2,
-.community h2 {
-    font-size: clamp(23px, 4vw, 34px);
+.features h2 {
+    font-size: clamp(25px, 5vw, 38px);
     margin-bottom: 30px;
 }
 
 .progress-info {
     display: flex;
+    justify-content: center;
     align-items: center;
-    justify-content: space-between;
-    max-width: 650px;
-    margin: auto auto 15px;
+    gap: 15px;
+    margin: 25px 0;
 }
 
 .progress-info strong {
-    font-size: 38px;
-    color: #ff414b;
+    color: #ff3548;
+    font-size: 45px;
 }
 
 .progress-info span {
-    color: #999faa;
-    font-size: 12px;
+    color: #8fa4bd;
+    font-size: 13px;
 }
 
 .progress-bar {
+    width: 100%;
     max-width: 650px;
-    height: 13px;
-    margin: auto;
-    background: #303541;
+    height: 15px;
+    margin: 20px auto;
+    background: #252b38;
     border-radius: 20px;
     overflow: hidden;
 }
 
 #progressFill {
-    height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #a61925, #ff3945);
+    height: 100%;
+    background: linear-gradient(90deg, #e63946, #2678d8);
     border-radius: 20px;
-    transition: width 1s ease;
+    transition: width 1s;
 }
 
 #nextProgress {
-    color: #ff5962;
-    margin-top: 20px;
+    color: #aeb9ca;
+    margin: 15px 0;
 }
 
 .progress-section small {
-    display: block;
-    color: #888e9b;
-    margin-top: 15px;
-    line-height: 1.6;
+    color: #778397;
 }
 
 /* TARJETAS */
 
 .features {
-    padding: 85px 7%;
+    padding: 85px 8%;
     text-align: center;
 }
 
 .cards {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 22px;
     margin-top: 35px;
 }
 
 .card {
-    background: #151a25;
-    padding: 35px 20px;
-    border: 1px solid #292f3c;
-    border-radius: 10px;
+    background: linear-gradient(145deg, #151c29, #10131b);
+    border: 1px solid #29364b;
+    border-radius: 12px;
+    padding: 30px 22px;
+    text-align: left;
     transition: 0.3s;
 }
 
 .card:hover {
-    transform: translateY(-8px);
-    border-color: #e52e38;
-    box-shadow: 0 10px 30px #e52e3820;
+    transform: translateY(-7px);
+    border-color: #e63946;
+    box-shadow: 0 10px 30px #0008;
 }
 
 .card h3 {
-    color: #ff4a55;
-    margin-bottom: 15px;
+    color: #ff4355;
+    margin-bottom: 12px;
 }
 
 .card p {
-    color: #aeb3bf;
-    font-size: 14px;
-    line-height: 1.6;
+    color: #aeb9ca;
 }
 
 /* COMUNIDAD */
 
 .community {
-    background: linear-gradient(135deg, #280d13, #111722);
-    padding: 85px 20px;
     text-align: center;
+    padding: 90px 8%;
+    background:
+        radial-gradient(circle at center, #182b45, #0b0e15 70%);
+    border-top: 1px solid #26344a;
+}
+
+.community h2 {
+    font-size: clamp(24px, 5vw, 38px);
 }
 
 .community p {
-    color: #bfc3cc;
-    margin-bottom: 25px;
+    color: #aeb9ca;
+    margin-top: 12px;
 }
 
 /* PIE DE PÁGINA */
 
 footer {
-    padding: 35px 20px;
+    background: #050609;
     text-align: center;
-    background: #080a0f;
-    border-top: 1px solid #292d38;
+    padding: 35px 15px;
+    border-top: 1px solid #252b38;
 }
 
 footer h2 {
-    letter-spacing: 4px;
-    margin-bottom: 12px;
+    color: #e63946;
+    margin-bottom: 10px;
 }
 
 footer p {
-    color: #858b98;
-    font-size: 12px;
-    margin-top: 8px;
+    color: #778397;
+    font-size: 13px;
+    margin: 5px;
 }
 
-/* ANIMACIONES */
+/* TELÉFONOS */
 
-@keyframes appear {
-    from {
-        opacity: 0;
-        transform: translateY(25px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* DISEÑO PARA CELULARES */
-
-@media (max-width: 800px) {
+@media (max-width: 650px) {
 
     .header {
-        flex-wrap: wrap;
+        justify-content: center;
+        text-align: center;
     }
 
     nav {
-        order: 3;
-        width: 100%;
         justify-content: center;
-        flex-wrap: wrap;
-        gap: 15px;
-    }
-
-    .cards {
-        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
     }
 
     .hero {
         min-height: 500px;
-        padding: 55px 7%;
-    }
-}
-
-@media (max-width: 480px) {
-
-    .logo {
-        font-size: 19px;
-    }
-
-    .login-btn {
-        padding: 10px;
-        font-size: 11px;
-    }
-
-    .cards {
-        grid-template-columns: 1fr;
+        padding: 75px 7%;
     }
 
     .hero h1 {
         letter-spacing: -2px;
     }
 
-    .hero h2 {
-        font-size: 16px;
-    }
-
     .progress-section,
     .features {
-        padding: 60px 6%;
+        padding: 65px 6%;
     }
-                 }
-  
+
+    .cards {
+        grid-template-columns: 1fr;
+    }
+
+    .login-btn {
+        width: 100%;
+    }
+}
