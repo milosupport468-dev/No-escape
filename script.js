@@ -1,11 +1,12 @@
 
-/* =================================
-   NO ESCAPE - SISTEMA DE CUENTAS
-================================= */
+/* =========================================
+   NO ESCAPE - SISTEMA PRINCIPAL
+========================================= */
 
-// CONTADOR DE DESARROLLO
+// CONFIGURACIÓN DEL PROGRESO
 const FECHA_INICIO = new Date(2026, 10, 4);
 
+// ACTUALIZAR PROGRESO
 function actualizarProgreso() {
     const ahora = new Date();
     const dia = 86400000;
@@ -28,11 +29,11 @@ function actualizarProgreso() {
         siguiente.textContent = progreso >= 100
             ? "¡Progreso completado!"
             : "Próximo incremento en " +
-              (5 - dias % 5) + " día(s).";
+              (5 - (dias % 5)) + " día(s).";
     }
 }
 
-// LEER PERFIL DE ROBLOX
+// OBTENER PERFIL DE ROBLOX
 function obtenerPerfil() {
     try {
         const cookie = document.cookie
@@ -42,7 +43,9 @@ function obtenerPerfil() {
         if (!cookie) return null;
 
         return JSON.parse(
-            decodeURIComponent(cookie.substring("roblox_user=".length))
+            decodeURIComponent(
+                cookie.substring("roblox_user=".length)
+            )
         );
     } catch (error) {
         console.error("Error leyendo perfil:", error);
@@ -50,8 +53,9 @@ function obtenerPerfil() {
     }
 }
 
-// ESTILOS DEL MENÚ
+// ESTILOS DEL MENÚ DE CUENTA
 const estilos = document.createElement("style");
+
 estilos.textContent = `
 .account-area {
     position: relative;
@@ -199,7 +203,6 @@ estilos.textContent = `
         right: 12px;
         left: 12px;
         width: auto;
-        max-width: none;
     }
 
     .account-trigger {
@@ -208,34 +211,34 @@ estilos.textContent = `
     }
 }
 `;
+
 document.head.appendChild(estilos);
 
 // CREAR MENÚ DE CUENTA
 function crearMenuCuenta(perfil) {
     const loginBtn = document.getElementById("loginBtn");
 
-    if (!loginBtn || !perfil) return;
+    if (!loginBtn || !loginBtn.parentNode || !perfil) return;
 
     loginBtn.style.display = "none";
 
-    const area = document.createElement("div");
-    area.className = "account-area";
+    // Evitar duplicar el menú
+    if (document.getElementById("accountArea")) return;
 
-    const avatar = perfil.picture || "";
-    const nombre = perfil.displayName ||
-                   perfil.username ||
-                   "Jugador de Roblox";
+    const area = document.createElement("div");
+    area.id = "accountArea";
+    area.className = "account-area";
 
     area.innerHTML = `
         <button class="account-trigger" id="accountTrigger">
-            <img src="" alt="Avatar" id="accountAvatar">
+            <img id="accountAvatar" alt="Avatar">
             <span>Mi cuenta</span>
             <span>⌄</span>
         </button>
 
         <div class="account-menu" id="accountMenu">
             <div class="account-user">
-                <img src="" alt="Avatar" id="menuAvatar">
+                <img id="menuAvatar" alt="Avatar">
                 <div>
                     <strong id="menuName"></strong>
                     <small id="menuUsername"></small>
@@ -254,17 +257,16 @@ function crearMenuCuenta(perfil) {
 
     loginBtn.parentNode.insertBefore(area, loginBtn.nextSibling);
 
-    const setAvatar = (id) => {
-        const img = document.getElementById(id);
-        if (img && avatar) {
-            img.src = avatar;
-        }
-    };
+    const avatar = perfil.picture || "";
 
-    setAvatar("accountAvatar");
-    setAvatar("menuAvatar");
+    if (avatar) {
+        document.getElementById("accountAvatar").src = avatar;
+        document.getElementById("menuAvatar").src = avatar;
+    }
 
-    document.getElementById("menuName").textContent = nombre;
+    document.getElementById("menuName").textContent =
+        perfil.displayName || "Jugador de Roblox";
+
     document.getElementById("menuUsername").textContent =
         perfil.username ? "@" + perfil.username : "Cuenta Roblox";
 
@@ -274,24 +276,35 @@ function crearMenuCuenta(perfil) {
         menu.classList.toggle("open");
     };
 
-    document.addEventListener("click", (event) => {
+    document.addEventListener("click", event => {
         if (!area.contains(event.target)) {
             menu.classList.remove("open");
         }
     });
 
-    // CONFIGURAR CUENTA
+    // CONFIGURACIÓN
     document.getElementById("configureAccount").onclick = () => {
         menu.classList.remove("open");
         mostrarConfiguracion(perfil);
     };
 
     // CERRAR SESIÓN
-    document.getElementById("logoutAccount").onclick = () => {
-        document.cookie =
-            "roblox_user=; Path=/; Max-Age=0; Secure; SameSite=Lax";
+    document.getElementById("logoutAccount").onclick = async () => {
+        try {
+            const respuesta = await fetch(
+                "/.netlify/functions/roblox-logout",
+                { method: "POST" }
+            );
 
-        window.location.reload();
+            if (!respuesta.ok) {
+                throw new Error("No se pudo cerrar la sesión.");
+            }
+
+            window.location.reload();
+
+        } catch (error) {
+            alert("Error al cerrar sesión. Inténtalo de nuevo.");
+        }
     };
 }
 
@@ -321,7 +334,7 @@ function mostrarConfiguracion(perfil) {
             modal.classList.remove("open");
         };
 
-        modal.addEventListener("click", (event) => {
+        modal.addEventListener("click", event => {
             if (event.target === modal) {
                 modal.classList.remove("open");
             }
@@ -346,6 +359,16 @@ function mostrarConfiguracion(perfil) {
     modal.classList.add("open");
 }
 
+// INICIO DE SESIÓN CON ROBLOX
+const loginBtn = document.getElementById("loginBtn");
+
+if (loginBtn) {
+    loginBtn.addEventListener("click", () => {
+        window.location.href =
+            "/.netlify/functions/roblox-login";
+    });
+}
+
 // BOTÓN DEL JUEGO
 document.getElementById("gameBtn")?.addEventListener("click", () => {
     alert("NO ESCAPE todavía está en desarrollo.");
@@ -356,13 +379,14 @@ document.getElementById("communityBtn")?.addEventListener("click", () => {
     alert("La comunidad oficial estará disponible próximamente.");
 });
 
-// INICIAR
+// INICIAR SISTEMA
 actualizarProgreso();
+
 setInterval(actualizarProgreso, 60000);
 
+// COMPROBAR SESIÓN
 const perfilRoblox = obtenerPerfil();
 
 if (perfilRoblox) {
     crearMenuCuenta(perfilRoblox);
-        }
-                               
+                           }
