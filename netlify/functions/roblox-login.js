@@ -9,11 +9,10 @@ exports.handler = async function () {
         if (!clientId || !redirectUri) {
             return {
                 statusCode: 500,
-                body: "Faltan las variables ROBLOX_CLIENT_ID o ROBLOX_REDIRECT_URI en Netlify."
+                body: "Faltan variables de Roblox en Netlify."
             };
         }
 
-        // Crear protección PKCE
         const verifier = crypto.randomBytes(32).toString("base64url");
         const state = crypto.randomBytes(24).toString("hex");
 
@@ -22,13 +21,12 @@ exports.handler = async function () {
             .update(verifier)
             .digest("base64url");
 
-        // Crear dirección de autorización de Roblox
         const params = new URLSearchParams({
             client_id: clientId,
             redirect_uri: redirectUri,
             response_type: "code",
             scope: "openid profile",
-            state: state,
+            state,
             code_challenge: challenge,
             code_challenge_method: "S256"
         });
@@ -41,11 +39,13 @@ exports.handler = async function () {
             statusCode: 302,
             headers: {
                 Location: authorizationUrl,
+                "Cache-Control": "no-store"
+            },
+            multiValueHeaders: {
                 "Set-Cookie": [
                     `roblox_verifier=${verifier}; HttpOnly; Secure; SameSite=Lax; Path=/.netlify/functions; Max-Age=600`,
                     `roblox_state=${state}; HttpOnly; Secure; SameSite=Lax; Path=/.netlify/functions; Max-Age=600`
-                ],
-                "Cache-Control": "no-store"
+                ]
             },
             body: ""
         };
@@ -59,4 +59,4 @@ exports.handler = async function () {
         };
     }
 };
-
+                    
