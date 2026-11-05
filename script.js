@@ -1,8 +1,7 @@
 
 /* =====================================================
-   NO ESCAPE - SISTEMA PRINCIPAL + CONTROL CENTER
-   OWNER: Rodnydetemu6
-   DEV + ADMIN: soyloky944 / donsalva3w
+   NO ESCAPE - SISTEMA PRINCIPAL
+   Login Roblox + Cuenta + Panel de administración
 ===================================================== */
 
 (() => {
@@ -15,12 +14,15 @@
 const FECHA_INICIO = new Date(2026, 10, 4);
 const STORAGE_KEY = "no_escape_control_center_v3";
 
+const LOGIN_URL = "/.netlify/functions/roblox-login";
+
 const ROLES = {
     rodnydetemu6: {
         name: "Rodnydetemu6",
         role: "OWNER",
         permissions: ["all"]
     },
+
     soyloky944: {
         name: "soyloky944",
         role: "DEV + ADMIN",
@@ -30,6 +32,7 @@ const ROLES = {
             "comunidad", "multimedia", "estadisticas"
         ]
     },
+
     donsalva3w: {
         name: "donsalva3w",
         role: "DEV + ADMIN",
@@ -53,29 +56,29 @@ const CATEGORIES = {
     estadisticas: "📊 Estadísticas"
 };
 
-/* =====================================================
-   2. ESTADO
-===================================================== */
-
 let currentUser = null;
 let currentPage = "inicio";
 let currentCategory = "noticias";
 let editingId = null;
 let searchQuery = "";
 
-let database = loadDatabase();
+/* =====================================================
+   2. BASE LOCAL
+===================================================== */
 
 function loadDatabase() {
     try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
 
-        if (saved && Array.isArray(saved.posts) &&
-            Array.isArray(saved.drafts) &&
-            Array.isArray(saved.history)) {
-            return saved;
+        if (saved && Array.isArray(saved.posts)) {
+            return {
+                posts: saved.posts,
+                drafts: Array.isArray(saved.drafts) ? saved.drafts : [],
+                history: Array.isArray(saved.history) ? saved.history : []
+            };
         }
     } catch (error) {
-        console.error("Error leyendo datos:", error);
+        console.error("Error leyendo base local:", error);
     }
 
     return {
@@ -85,18 +88,30 @@ function loadDatabase() {
     };
 }
 
+let database = loadDatabase();
+
 function saveDatabase() {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(database));
     } catch (error) {
-        alert("No se pudieron guardar los datos. Puede faltar espacio.");
         console.error(error);
+        alert("No se pudieron guardar los datos.");
     }
 }
 
 /* =====================================================
-   3. PERFIL ROBLOX EXISTENTE
+   3. UTILIDADES
 ===================================================== */
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
 
 function obtenerPerfil() {
     try {
@@ -112,23 +127,61 @@ function obtenerPerfil() {
             )
         );
     } catch (error) {
-        console.error("Error leyendo perfil:", error);
+        console.error("Error leyendo perfil Roblox:", error);
         return null;
     }
 }
 
-function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
-    })[char]);
+/* =====================================================
+   4. INICIO DE SESIÓN ROBLOX
+===================================================== */
+
+/*
+   IMPORTANTE:
+   No se reemplaza el sistema OAuth existente.
+   Este bloque solamente dirige al usuario a la función
+   de inicio de sesión que ya tienes en Netlify.
+*/
+
+function configurarLoginRoblox() {
+    if (document.documentElement.dataset.robloxLoginReady === "true") {
+        return;
+    }
+
+    document.documentElement.dataset.robloxLoginReady = "true";
+
+    document.addEventListener("click", event => {
+        const button = event.target.closest("#loginBtn");
+
+        if (!button) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (button.dataset.loading === "true") return;
+
+        button.dataset.loading = "true";
+        button.disabled = true;
+
+        const originalText = button.textContent;
+        button.textContent = "Conectando con Roblox...";
+
+        try {
+            window.location.assign(LOGIN_URL);
+        } catch (error) {
+            console.error("Error al iniciar Roblox:", error);
+
+            button.disabled = false;
+            button.dataset.loading = "false";
+            button.textContent = originalText;
+
+            alert("No se pudo abrir el inicio de sesión de Roblox.");
+        }
+    }, true);
 }
 
 /* =====================================================
-   4. PROGRESO
+   5. PROGRESO DEL DESARROLLO
 ===================================================== */
 
 function actualizarProgreso() {
@@ -152,13 +205,12 @@ function actualizarProgreso() {
     if (siguiente) {
         siguiente.textContent = progreso >= 100
             ? "¡Progreso completado!"
-            : "Próximo incremento en " +
-              (5 - (dias % 5)) + " día(s).";
+            : "Próximo incremento en " + (5 - dias % 5) + " día(s).";
     }
 }
 
 /* =====================================================
-   5. ESTILOS
+   6. ESTILOS
 ===================================================== */
 
 function crearEstilos() {
@@ -171,8 +223,8 @@ function crearEstilos() {
     .account-area {
         position:relative;
         display:inline-block;
-        font-family:Arial,sans-serif;
         z-index:1000;
+        font-family:Arial,sans-serif;
     }
 
     .account-trigger {
@@ -259,7 +311,6 @@ function crearEstilos() {
         padding:13px 17px;
         font-weight:bold;
         cursor:pointer;
-        box-shadow:0 0 18px #991b1b88;
     }
 
     #neAdminPanel {
@@ -379,7 +430,7 @@ function crearEstilos() {
 }
 
 /* =====================================================
-   6. MENÚ DE CUENTA
+   7. MENÚ DE CUENTA
 ===================================================== */
 
 function crearMenuCuenta(perfil) {
@@ -407,6 +458,7 @@ function crearMenuCuenta(perfil) {
                 <img id="menuAvatar"
                     style="width:48px;height:48px;border-radius:50%"
                     alt="Avatar">
+
                 <div>
                     <strong id="menuName"></strong>
                     <small id="menuUsername"
@@ -458,13 +510,11 @@ function crearMenuCuenta(perfil) {
                 { method: "POST" }
             );
 
-            if (!response.ok) {
-                throw new Error("Error de cierre de sesión");
-            }
+            if (!response.ok) throw new Error("Error de cierre");
 
             window.location.reload();
         } catch (error) {
-            alert("No se pudo cerrar sesión. Comprueba que roblox-logout.js exista.");
+            alert("No se pudo cerrar sesión. Comprueba la función roblox-logout.");
         }
     };
 }
@@ -519,13 +569,15 @@ function mostrarConfiguracion(perfil) {
 }
 
 /* =====================================================
-   7. PANEL DE ADMINISTRACIÓN
+   8. PERMISOS Y PANEL
 ===================================================== */
 
 function can(permission) {
     return currentUser &&
-        (currentUser.permissions.includes("all") ||
-         currentUser.permissions.includes(permission));
+        (
+            currentUser.permissions.includes("all") ||
+            currentUser.permissions.includes(permission)
+        );
 }
 
 function isOwner() {
@@ -553,13 +605,13 @@ function startAdmin(profile) {
 }
 
 function openAdminPanel() {
+    if (!currentUser) return;
     if (document.getElementById("neAdminPanel")) return;
 
     const panel = document.createElement("div");
     panel.id = "neAdminPanel";
 
     document.body.appendChild(panel);
-
     renderPanel();
 }
 
@@ -573,7 +625,9 @@ function renderPanel() {
         ["categorias", "☰ Categorías"]
     ];
 
-    if (isOwner()) navigation.push(["owner", "👑 Owner"]);
+    if (isOwner()) {
+        navigation.push(["owner", "👑 Owner"]);
+    }
 
     panel.innerHTML = `
         <header class="ne-top">
@@ -582,6 +636,7 @@ function renderPanel() {
                     <b style="font-size:19px;color:#ef4444">NO ESCAPE</b>
                     <div class="ne-muted">CONTROL CENTER</div>
                 </div>
+
                 <button id="neClose">✕ Cerrar</button>
             </div>
 
@@ -617,17 +672,17 @@ function renderPage() {
     if (currentPage === "inicio") renderHome(area);
     if (currentPage === "cuenta") renderAccount(area);
     if (currentPage === "categorias") renderCategories(area);
-    if (currentPage === "owner" && isOwner()) renderOwner(area);
+
+    if (currentPage === "owner" && isOwner()) {
+        renderOwner(area);
+    }
 }
 
 /* =====================================================
-   8. INICIO
+   9. INICIO DEL PANEL
 ===================================================== */
 
 function renderHome(area) {
-    const total = database.posts.length;
-    const drafts = database.drafts.length;
-
     area.innerHTML = `
         <h2>🏠 Inicio</h2>
         <p>Bienvenido al centro de control de NO ESCAPE.</p>
@@ -639,20 +694,23 @@ function renderHome(area) {
 
         <div class="ne-grid">
             <div class="ne-card">
-                <h2>${total}</h2>
-                <p>Publicaciones</p>
+                <h2>${database.posts.length}</h2>
+                Publicaciones
             </div>
+
             <div class="ne-card">
-                <h2>${drafts}</h2>
-                <p>Borradores</p>
+                <h2>${database.drafts.length}</h2>
+                Borradores
             </div>
+
             <div class="ne-card">
                 <h2>${database.history.length}</h2>
-                <p>Acciones registradas</p>
+                Acciones
             </div>
         </div>
 
         <h3>Accesos rápidos</h3>
+
         <div class="ne-grid">
             ${Object.entries(CATEGORIES)
                 .filter(([key]) => can(key) && key !== "estadisticas")
@@ -672,7 +730,7 @@ function renderHome(area) {
 }
 
 /* =====================================================
-   9. CUENTA
+   10. CUENTA
 ===================================================== */
 
 function renderAccount(area) {
@@ -680,22 +738,18 @@ function renderAccount(area) {
 
     area.innerHTML = `
         <h2>👤 Mi cuenta</h2>
+
         <div class="ne-card">
             <h3>${escapeHTML(currentUser.name)}</h3>
             <p class="ne-red">${escapeHTML(currentUser.role)}</p>
             <p>Usuario Roblox: @${escapeHTML(profile.username || "")}</p>
             <p>ID Roblox: ${escapeHTML(profile.id || "No disponible")}</p>
-            <p>Sesión de perfil: ${profile.username ? "Detectada" : "No disponible"}</p>
         </div>
-
-        <h3>Mis publicaciones</h3>
-        ${database.posts.filter(post => post.author === currentUser.name).length}
-        <p class="ne-muted">Publicaciones atribuidas a esta cuenta en este navegador.</p>
     `;
 }
 
 /* =====================================================
-   10. CATEGORÍAS
+   11. CATEGORÍAS
 ===================================================== */
 
 function renderCategories(area) {
@@ -706,6 +760,7 @@ function renderCategories(area) {
         <h2>☰ Categorías</h2>
 
         <label>Seleccionar categoría</label>
+
         <select id="neCategorySelect">
             ${available.map(([key, label]) => `
                 <option value="${key}"
@@ -715,12 +770,15 @@ function renderCategories(area) {
             `).join("")}
         </select>
 
+        
         <div id="neCategoryContent"></div>
 
         <hr style="border-color:#333;margin:20px 0">
 
         <h3>🔎 Buscar publicaciones</h3>
-        <input id="neSearch" placeholder="Buscar por título o contenido..."
+
+        <input id="neSearch"
+            placeholder="Buscar por título o contenido..."
             value="${escapeHTML(searchQuery)}">
 
         <div id="neSearchResults"></div>
@@ -752,23 +810,139 @@ function renderCategories(area) {
 }
 
 /* =====================================================
-   11. EDITOR DE CADA CATEGORÍA
+   12. EDITOR DE CATEGORÍAS
 ===================================================== */
 
 function renderCategoryContent() {
-    const area = document.getElemen
+    const area = document.getElementById("neCategoryContent");
+    if (!area) return;
+
+    const key = currentCategory;
+
+    if (!can(key)) {
+        area.innerHTML = "<p>No tienes permiso.</p>";
+        return;
+    }
+
+    if (key === "estadisticas") {
+        renderStatistics(area);
+        return;
+    }
+
+    const editing = editingId
+        ? database.posts.find(post => post.id === editingId)
+        : null;
+
+    if (editing && editing.category !== key) {
+        editingId = null;
+    }
+
+    const posts = database.posts.filter(
+        post => post.category === key
+    );
+
+    area.innerHTML = `
+        <div class="ne-card">
+            <h2>${CATEGORIES[key]}</h2>
+            <p>${posts.length} publicaciones</p>
+        </div>
+
+        <form id="neEditor">
+            <h3>${editing ? "✏️ Editar contenido" : "➕ Crear contenido"}</h3>
+
+            <label>Título</label>
+            <input id="neTitle" maxlength="100" required
+                value="${escapeHTML(editing?.title || "")}"
+                placeholder="Título">
+
+            <label>Descripción</label>
+            <textarea id="neDescription" maxlength="5000" required
+                placeholder="Escribe el contenido...">${escapeHTML(editing?.description || "")}</textarea>
+
+            <label>Imagen URL</label>
+            <input id="neImage" type="url"
+                value="${escapeHTML(editing?.image || "")}"
+                placeholder="https://...">
+
+            <label>Estado</label>
+            <select id="neStatus">
+                <option value="published">Publicar</option>
+                <option value="draft">Guardar borrador</option>
+            </select>
+
+            <button class="ne-primary" type="submit">
+                ${editing ? "Guardar cambios" : "Guardar contenido"}
+            </button>
+
+            ${editing ? `
+                <button type="button" id="neCancelEdit">Cancelar</button>
+            ` : ""}
+        </form>
+
+        <h3>Publicaciones de ${CATEGORIES[key]}</h3>
+
+        <div>
+            ${posts.map(post => `
+                <article class="ne-card ne-publication">
+                    <h3>${escapeHTML(post.title)}</h3>
+                    <p>${escapeHTML(post.description)}</p>
+
+                    ${post.image ? `
+                        <img src="${escapeHTML(post.image)}"
+                            alt="" loading="lazy">
+                    ` : ""}
+
+                    <p class="ne-muted">
+                        Autor: ${escapeHTML(post.author)} ·
+                        ${new Date(post.date).toLocaleString()}
+                    </p>
+
+                    <div class="ne-actions">
+                        <button data-edit="${escapeHTML(post.id)}">✏️ Editar</button>
+                        <button data-delete="${escapeHTML(post.id)}">🗑️ Eliminar</button>
+                    </div>
+                </article>
+            `).join("") || "<p>Aún no hay publicaciones.</p>"}
+        </div>
+    `;
+
+    area.querySelector("#neEditor").onsubmit = event => {
+        event.preventDefault();
+
+        const title = area.querySelector("#neTitle").value.trim();
+        const description = area.querySelector("#neDescription").value.trim();
+        const image = area.querySelector("#neImage").value.trim();
+        const status = area.querySelector("#neStatus").value;
+
+        if (!title || !description) {
+            alert("Completa el título y la descripción.");
+            return;
+        }
+
+        if (editing) {
+            editing.title = title;
+            editing.description = description;
+            editing.image = image;
             editing.updatedAt = new Date().toISOString();
 
-            if (status === "draft") {
-                database.posts = database.posts.filter(
-                    post => post.id !== editing.id
-                );
+            database.posts = database.posts.filter(
+                post => post.id !== editing.id
+            );
 
-                editing.status = "draft";
+            database.drafts = database.drafts.filter(
+                draft => draft.id !== editing.id
+            );
+
+            editing.status = status;
+
+            if (status === "draft") {
                 database.drafts.push(editing);
+                addHistory("Guardó cambios como borrador", title);
+            } else {
+                database.posts.push(editing);
+                addHistory("Editó publicación", title);
             }
 
-            addHistory("Editó", editing.title);
             editingId = null;
 
         } else {
@@ -828,19 +1002,21 @@ function renderCategoryContent() {
 }
 
 /* =====================================================
-   12. BORRADORES
+   13. BORRADORES
 ===================================================== */
 
 function renderDrafts() {
     const area = document.getElementById("neDrafts");
     if (!area) return;
 
-    area.innerHTML = database.drafts.map(item => `
+    const drafts = database.drafts.filter(
+        item => can(item.category)
+    );
+
+    area.innerHTML = drafts.map(item => `
         <div class="ne-card">
             <b>${escapeHTML(item.title)}</b>
-            <p class="ne-muted">
-                ${CATEGORIES[item.category] || item.category}
-            </p>
+            <p class="ne-muted">${CATEGORIES[item.category]}</p>
 
             <div class="ne-actions">
                 <button data-draft-publish="${escapeHTML(item.id)}">
@@ -858,10 +1034,7 @@ function renderDrafts() {
             const id = button.dataset.draftPublish;
             const item = database.drafts.find(draft => draft.id === id);
 
-            if (!item || !can(item.category)) {
-                alert("No tienes permiso para esta categoría.");
-                return;
-            }
+            if (!item || !can(item.category)) return;
 
             database.drafts = database.drafts.filter(
                 draft => draft.id !== id
@@ -869,9 +1042,10 @@ function renderDrafts() {
 
             item.status = "published";
             item.date = new Date().toISOString();
-            database.posts.push(item);
 
+            database.posts.push(item);
             addHistory("Publicó borrador", item.title);
+
             saveDatabase();
             renderPanel();
         };
@@ -897,7 +1071,7 @@ function renderDrafts() {
 }
 
 /* =====================================================
-   13. BUSCADOR
+   14. BUSCADOR
 ===================================================== */
 
 function renderSearchResults() {
@@ -918,12 +1092,8 @@ function renderSearchResults() {
     area.innerHTML = results.map(post => `
         <div class="ne-card">
             <b>${escapeHTML(post.title)}</b>
-            <p class="ne-muted">
-                ${CATEGORIES[post.category] || post.category}
-            </p>
-            <button data-result="${escapeHTML(post.id)}">
-                Abrir
-            </button>
+            <p class="ne-muted">${CATEGORIES[post.category]}</p>
+            <button data-result="${escapeHTML(post.id)}">Abrir</button>
         </div>
     `).join("") || "<p>No se encontraron publicaciones.</p>";
 
@@ -943,7 +1113,7 @@ function renderSearchResults() {
 }
 
 /* =====================================================
-   14. HISTORIAL
+   15. HISTORIAL
 ===================================================== */
 
 function addHistory(action, title) {
@@ -961,41 +1131,39 @@ function renderHistory() {
     const area = document.getElementById("neHistory");
     if (!area) return;
 
-    area.innerHTML = database.history
-        .filter(item => item.user === currentUser.name || isOwner())
-        .slice(0, 30)
-        .map(item => `
-            <div class="ne-card">
-                <b>${escapeHTML(item.action)}:</b>
-                ${escapeHTML(item.title)}
+    const history = database.history.filter(
+        item => item.user === currentUser.name || isOwner()
+    );
 
-                <p class="ne-muted">
-                    ${escapeHTML(item.user)} ·
-                    ${new Date(item.date).toLocaleString()}
-                </p>
-            </div>
-        `).join("") || "<p>No hay actividad registrada.</p>";
+    area.innerHTML = history.slice(0, 30).map(item => `
+        <div class="ne-card">
+            <b>${escapeHTML(item.action)}:</b>
+            ${escapeHTML(item.title)}
+
+            <p class="ne-muted">
+                ${escapeHTML(item.user)} ·
+                ${new Date(item.date).toLocaleString()}
+            </p>
+        </div>
+    `).join("") || "<p>No hay actividad registrada.</p>";
 }
 
 /* =====================================================
-   15. ESTADÍSTICAS
+   16. ESTADÍSTICAS
 ===================================================== */
 
 function renderStatistics(area) {
-    const total = database.posts.length;
-    const drafts = database.drafts.length;
-
     area.innerHTML = `
         <h2>📊 Estadísticas</h2>
 
         <div class="ne-grid">
             <div class="ne-card">
-                <h2>${total}</h2>
+                <h2>${database.posts.length}</h2>
                 Publicaciones
             </div>
 
             <div class="ne-card">
-                <h2>${drafts}</h2>
+                <h2>${database.drafts.length}</h2>
                 Borradores
             </div>
 
@@ -1023,7 +1191,7 @@ function renderStatistics(area) {
 }
 
 /* =====================================================
-   16. PANEL OWNER
+   17. OWNER
 ===================================================== */
 
 function renderOwner(area) {
@@ -1055,16 +1223,11 @@ function renderOwner(area) {
 
         <h3>Herramientas</h3>
 
-        <button id="neExportData">
-            📥 Exportar datos JSON
-        </button>
-
-        <button id="neClearHistory">
-            🧹 Limpiar historial
-        </button>
+        <button id="neExportData">📥 Exportar datos JSON</button>
+        <button id="neClearHistory">🧹 Limpiar historial</button>
 
         <p class="ne-muted">
-            Herramientas locales del panel.
+            Estas herramientas operan sobre los datos locales del navegador.
         </p>
     `;
 
@@ -1094,23 +1257,17 @@ function renderOwner(area) {
 }
 
 /* =====================================================
-   17. INICIO DEL SISTEMA
+   18. INICIO DEL SISTEMA
 ===================================================== */
 
 function iniciarSistema() {
-    actualizarProgreso();
-    setInterval(actualizarProgreso, 60000);
-
     crearEstilos();
 
-    const loginBtn = document.getElementById("loginBtn");
+    // Activar el botón de inicio de sesión Roblox.
+    configurarLoginRoblox();
 
-    if (loginBtn) {
-        loginBtn.addEventListener("click", () => {
-            window.location.href =
-                "/.netlify/functions/roblox-login";
-        });
-    }
+    actualizarProgreso();
+    setInterval(actualizarProgreso, 60000);
 
     document.getElementById("gameBtn")?.addEventListener("click", () => {
         alert("NO ESCAPE todavía está en desarrollo.");
@@ -1129,10 +1286,12 @@ function iniciarSistema() {
 }
 
 if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", iniciarSistema);
+    document.addEventListener("DOMContentLoaded", iniciarSistema, {
+        once: true
+    });
 } else {
     iniciarSistema();
 }
 
 })();
-                   
+       
