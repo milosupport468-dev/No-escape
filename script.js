@@ -390,3 +390,197 @@ const perfilRoblox = obtenerPerfil();
 if (perfilRoblox) {
     crearMenuCuenta(perfilRoblox);
                            }
+                           
+/* =====================================
+   NO ESCAPE - SISTEMA DE CARGOS
+===================================== */
+
+(function () {
+    const ADMINISTRADORES = {
+        "rodnydetemu6": {
+            nombre: "Rodnydetemu6",
+            cargo: "OWNER",
+            permisos: ["all"]
+        },
+        "soyloky944": {
+            nombre: "soyloky944",
+            cargo: "DEV + ADMIN",
+            permisos: [
+                "noticias",
+                "anuncios",
+                "eventos",
+                "mapas",
+                "zombis",
+                "armas",
+                "comunidad",
+                "multimedia",
+                "estadisticas"
+            ]
+        },
+        "donsalva3w": {
+            nombre: "donsalva3w",
+            cargo: "DEV + ADMIN",
+            permisos: [
+                "noticias",
+                "anuncios",
+                "eventos",
+                "mapas",
+                "zombis",
+                "armas",
+                "comunidad",
+                "multimedia",
+                "estadisticas"
+            ]
+        }
+    };
+
+    function obtenerUsuarioRoblox() {
+        const cookie = document.cookie
+            .split("; ")
+            .find(item => item.startsWith("roblox_user="));
+
+        if (!cookie) return null;
+
+        try {
+            return JSON.parse(
+                decodeURIComponent(cookie.substring("roblox_user=".length))
+            );
+        } catch {
+            return null;
+        }
+    }
+
+    function iniciarPanelEspecial() {
+        const perfil = obtenerUsuarioRoblox();
+        if (!perfil) return;
+
+        const username = String(
+            perfil.username || ""
+        ).toLowerCase();
+
+        const administrador = ADMINISTRADORES[username];
+        if (!administrador) return;
+
+        if (document.getElementById("noEscapeAdminButton")) return;
+
+        const boton = document.createElement("button");
+        boton.id = "noEscapeAdminButton";
+        boton.textContent = "⚙️ Panel de administración";
+
+        boton.style.cssText = `
+            position:fixed;
+            right:15px;
+            bottom:18px;
+            z-index:9998;
+            background:#b91c1c;
+            color:white;
+            border:1px solid #ef4444;
+            border-radius:12px;
+            padding:13px 17px;
+            font-weight:bold;
+            cursor:pointer;
+            box-shadow:0 0 18px #991b1b88;
+        `;
+
+        document.body.appendChild(boton);
+
+        boton.addEventListener("click", () => {
+            let panel = document.getElementById("noEscapeAdminPanel");
+
+            if (panel) {
+                panel.remove();
+                return;
+            }
+
+            panel = document.createElement("div");
+            panel.id = "noEscapeAdminPanel";
+
+            panel.style.cssText = `
+                position:fixed;
+                inset:5%;
+                z-index:9999;
+                overflow:auto;
+                background:#111;
+                color:white;
+                border:1px solid #b91c1c;
+                border-radius:16px;
+                padding:22px;
+                font-family:Arial,sans-serif;
+                box-shadow:0 0 35px #000;
+            `;
+
+            const herramientas = [
+                ["noticias", "📰 Noticias"],
+                ["anuncios", "📢 Anuncios"],
+                ["eventos", "📅 Eventos"],
+                ["mapas", "🗺️ Mapas"],
+                ["zombis", "🧟 Zombis"],
+                ["armas", "🔫 Armas"],
+                ["comunidad", "👥 Comunidad"],
+                ["multimedia", "🖼️ Multimedia"],
+                ["estadisticas", "📊 Estadísticas"]
+            ];
+
+            const esOwner = administrador.cargo === "OWNER";
+
+            const disponibles = herramientas.filter(([permiso]) =>
+                administrador.permisos.includes("all") ||
+                administrador.permisos.includes(permiso)
+            );
+
+            panel.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+                    <h2 style="color:#ef4444">NO ESCAPE CONTROL</h2>
+                    <button id="cerrarNoEscapePanel"
+                        style="background:#991b1b;color:white;border:0;padding:10px;border-radius:8px">
+                        Cerrar ✕
+                    </button>
+                </div>
+
+                <p>Usuario: <b>${administrador.nombre}</b></p>
+                <p>Cargo: <b style="color:#f87171">${administrador.cargo}</b></p>
+
+                <hr style="border-color:#444">
+
+                <h3>Herramientas disponibles</h3>
+
+                <div id="noEscapeTools"
+                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+                    ${disponibles.map(([permiso, nombre]) => `
+                        <button data-tool="${permiso}"
+                            style="background:#292929;color:white;border:1px solid #555;padding:15px;border-radius:10px">
+                            ${nombre}
+                        </button>
+                    `).join("")}
+                </div>
+
+                ${esOwner ? `
+                    <hr style="border-color:#444">
+                    <h3 style="color:#fbbf24">Herramientas OWNER</h3>
+                    <p>Control de cargos, permisos y administración general.</p>
+                ` : ""}
+                
+                <p style="color:#999;font-size:12px;margin-top:25px">
+                    NO ESCAPE · Centro de administración
+                </p>
+            `;
+
+            document.body.appendChild(panel);
+
+            document.getElementById("cerrarNoEscapePanel")
+                .addEventListener("click", () => panel.remove());
+
+            panel.querySelectorAll("[data-tool]").forEach(boton => {
+                boton.addEventListener("click", () => {
+                    alert(
+                        "Sección seleccionada: " +
+                        boton.dataset.tool +
+                        ". Falta conectar esta herramienta."
+                    );
+                });
+            });
+        });
+    }
+
+    iniciarPanelEspecial();
+})();
