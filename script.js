@@ -390,197 +390,357 @@ const perfilRoblox = obtenerPerfil();
 if (perfilRoblox) {
     crearMenuCuenta(perfilRoblox);
                            }
-                           
-/* =====================================
-   NO ESCAPE - SISTEMA DE CARGOS
-===================================== */
 
-(function () {
-    const ADMINISTRADORES = {
-        "rodnydetemu6": {
-            nombre: "Rodnydetemu6",
-            cargo: "OWNER",
-            permisos: ["all"]
+
+/* =========================================
+   NO ESCAPE - PANEL ESPECIAL
+   OWNER / DEV + ADMIN
+========================================= */
+
+(() => {
+    const ROLES = {
+        rodnydetemu6: {
+            name: "Rodnydetemu6",
+            role: "OWNER",
+            permissions: ["all"]
         },
-        "soyloky944": {
-            nombre: "soyloky944",
-            cargo: "DEV + ADMIN",
-            permisos: [
-                "noticias",
-                "anuncios",
-                "eventos",
-                "mapas",
-                "zombis",
-                "armas",
-                "comunidad",
-                "multimedia",
-                "estadisticas"
+        soyloky944: {
+            name: "soyloky944",
+            role: "DEV + ADMIN",
+            permissions: [
+                "noticias", "anuncios", "eventos",
+                "mapas", "zombis", "armas",
+                "comunidad", "multimedia", "estadisticas"
             ]
         },
-        "donsalva3w": {
-            nombre: "donsalva3w",
-            cargo: "DEV + ADMIN",
-            permisos: [
-                "noticias",
-                "anuncios",
-                "eventos",
-                "mapas",
-                "zombis",
-                "armas",
-                "comunidad",
-                "multimedia",
-                "estadisticas"
+        donsalva3w: {
+            name: "donsalva3w",
+            role: "DEV + ADMIN",
+            permissions: [
+                "noticias", "anuncios", "eventos",
+                "mapas", "zombis", "armas",
+                "comunidad", "multimedia", "estadisticas"
             ]
         }
     };
 
-    function obtenerUsuarioRoblox() {
+    const SECTIONS = {
+        noticias: "📰 Noticias",
+        anuncios: "📢 Anuncios",
+        eventos: "📅 Eventos",
+        mapas: "🗺️ Mapas",
+        zombis: "🧟 Zombis",
+        armas: "🔫 Armas",
+        comunidad: "👥 Comunidad",
+        multimedia: "🖼️ Multimedia",
+        estadisticas: "📊 Estadísticas"
+    };
+
+    const STORAGE_KEY = "no_escape_panel_content_v1";
+
+    let currentUser = null;
+    let currentSection = "noticias";
+    let content = loadContent();
+
+    function loadContent() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        } catch {
+            return {};
+        }
+    }
+
+    function saveContent() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
+    }
+
+    function getProfile() {
         const cookie = document.cookie
             .split("; ")
-            .find(item => item.startsWith("roblox_user="));
+            .find(c => c.startsWith("roblox_user="));
 
         if (!cookie) return null;
 
         try {
             return JSON.parse(
-                decodeURIComponent(cookie.substring("roblox_user=".length))
+                decodeURIComponent(cookie.substring(12))
             );
         } catch {
             return null;
         }
     }
 
-    function iniciarPanelEspecial() {
-        const perfil = obtenerUsuarioRoblox();
-        if (!perfil) return;
+    function can(permission) {
+        return currentUser.permissions.includes("all") ||
+            currentUser.permissions.includes(permission);
+    }
 
-        const username = String(
-            perfil.username || ""
-        ).toLowerCase();
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[char]);
+    }
 
-        const administrador = ADMINISTRADORES[username];
-        if (!administrador) return;
+    function createStyles() {
+        if (document.getElementById("nePanelStyles")) return;
 
-        if (document.getElementById("noEscapeAdminButton")) return;
+        const style = document.createElement("style");
+        style.id = "nePanelStyles";
+        style.textContent = `
+            #neAdminButton {
+                position:fixed;right:16px;bottom:18px;z-index:9998;
+                background:#b91c1c;color:white;border:0;border-radius:12px;
+                padding:14px 18px;font-weight:bold;cursor:pointer;
+            }
+            #neAdminPanel {
+                position:fixed;inset:3%;z-index:9999;
+                background:#101010;color:white;border:1px solid #7f1d1d;
+                border-radius:16px;padding:18px;overflow:auto;
+                font-family:Arial,sans-serif;box-shadow:0 0 40px #000;
+            }
+            #neAdminPanel button {
+                cursor:pointer;border:1px solid #444;border-radius:9px;
+                padding:11px;background:#242424;color:white;
+            }
+            #neAdminPanel input,#neAdminPanel textarea {
+                box-sizing:border-box;width:100%;padding:12px;
+                margin:7px 0 13px;background:#202020;color:white;
+                border:1px solid #444;border-radius:8px;
+            }
+            #neAdminPanel textarea {min-height:100px;resize:vertical}
+            .ne-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px}
+            .ne-card {background:#1b1b1b;border:1px solid #333;border-radius:12px;padding:13px;margin:10px 0}
+            .ne-primary {background:#991b1b!important;border-color:#dc2626!important}
+            .ne-muted {color:#aaa;font-size:12px}
+        `;
+        document.head.appendChild(style);
+    }
 
-        const boton = document.createElement("button");
-        boton.id = "noEscapeAdminButton";
-        boton.textContent = "⚙️ Panel de administración";
+    function addButton() {
+        if (document.getElementById("neAdminButton")) return;
 
-        boton.style.cssText = `
-            position:fixed;
-            right:15px;
-            bottom:18px;
-            z-index:9998;
-            background:#b91c1c;
-            color:white;
-            border:1px solid #ef4444;
-            border-radius:12px;
-            padding:13px 17px;
-            font-weight:bold;
-            cursor:pointer;
-            box-shadow:0 0 18px #991b1b88;
+        const button = document.createElement("button");
+        button.id = "neAdminButton";
+        button.textContent = "⚙️ PANEL NO ESCAPE";
+        button.onclick = openPanel;
+        document.body.appendChild(button);
+    }
+
+    function openPanel() {
+        if (document.getElementById("neAdminPanel")) return;
+
+        const panel = document.createElement("div");
+        panel.id = "neAdminPanel";
+        document.body.appendChild(panel);
+
+        renderPanel();
+    }
+
+    function renderPanel() {
+        const panel = document.getElementById("neAdminPanel");
+        if (!panel) return;
+
+        const sectionButtons = Object.entries(SECTIONS)
+            .filter(([key]) => can(key))
+            .map(([key, label]) => `
+                <button data-section="${key}"
+                    class="${currentSection === key ? "ne-primary" : ""}">
+                    ${label}
+                </button>
+            `).join("");
+
+        panel.innerHTML = `
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+                <div>
+                    <h2 style="color:#ef4444;margin:0">NO ESCAPE</h2>
+                    <p class="ne-muted">CONTROL CENTER</p>
+                </div>
+                <button id="neClose">✕ Cerrar</button>
+            </div>
+
+            <div class="ne-card">
+                <b>${escapeHTML(currentUser.name)}</b>
+                <p style="color:#f87171">${escapeHTML(currentUser.role)}</p>
+            </div>
+
+            <h3>Herramientas</h3>
+            <div class="ne-grid">${sectionButtons}</div>
+            <hr style="border-color:#333;margin:18px 0">
+            <div id="neSection"></div>
+            <p class="ne-muted">NO ESCAPE · Panel de administración</p>
         `;
 
-        document.body.appendChild(boton);
+        panel.querySelector("#neClose").onclick = () => panel.remove();
 
-        boton.addEventListener("click", () => {
-            let panel = document.getElementById("noEscapeAdminPanel");
+        panel.querySelectorAll("[data-section]").forEach(button => {
+            button.onclick = () => {
+                currentSection = button.dataset.section;
+                renderPanel();
+            };
+        });
 
-            if (panel) {
-                panel.remove();
-                return;
-            }
+        renderSection();
+    }
 
-            panel = document.createElement("div");
-            panel.id = "noEscapeAdminPanel";
+    function getItems() {
+        if (!content[currentSection]) content[currentSection] = [];
+        return content[currentSection];
+    }
 
-            panel.style.cssText = `
-                position:fixed;
-                inset:5%;
-                z-index:9999;
-                overflow:auto;
-                background:#111;
-                color:white;
-                border:1px solid #b91c1c;
-                border-radius:16px;
-                padding:22px;
-                font-family:Arial,sans-serif;
-                box-shadow:0 0 35px #000;
-            `;
+    function renderSection() {
+        const area = document.getElementById("neSection");
+        if (!area) return;
 
-            const herramientas = [
-                ["noticias", "📰 Noticias"],
-                ["anuncios", "📢 Anuncios"],
-                ["eventos", "📅 Eventos"],
-                ["mapas", "🗺️ Mapas"],
-                ["zombis", "🧟 Zombis"],
-                ["armas", "🔫 Armas"],
-                ["comunidad", "👥 Comunidad"],
-                ["multimedia", "🖼️ Multimedia"],
-                ["estadisticas", "📊 Estadísticas"]
-            ];
+        if (currentSection === "estadisticas") {
+            const total = Object.values(content)
+                .reduce((sum, items) => sum + items.length, 0);
 
-            const esOwner = administrador.cargo === "OWNER";
-
-            const disponibles = herramientas.filter(([permiso]) =>
-                administrador.permisos.includes("all") ||
-                administrador.permisos.includes(permiso)
-            );
-
-            panel.innerHTML = `
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-                    <h2 style="color:#ef4444">NO ESCAPE CONTROL</h2>
-                    <button id="cerrarNoEscapePanel"
-                        style="background:#991b1b;color:white;border:0;padding:10px;border-radius:8px">
-                        Cerrar ✕
-                    </button>
+            area.innerHTML = `
+                <h2>📊 Estadísticas</h2>
+                <div class="ne-card">
+                    <h3>${total}</h3>
+                    <p>Contenidos guardados en este navegador</p>
                 </div>
-
-                <p>Usuario: <b>${administrador.nombre}</b></p>
-                <p>Cargo: <b style="color:#f87171">${administrador.cargo}</b></p>
-
-                <hr style="border-color:#444">
-
-                <h3>Herramientas disponibles</h3>
-
-                <div id="noEscapeTools"
-                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
-                    ${disponibles.map(([permiso, nombre]) => `
-                        <button data-tool="${permiso}"
-                            style="background:#292929;color:white;border:1px solid #555;padding:15px;border-radius:10px">
-                            ${nombre}
-                        </button>
-                    `).join("")}
-                </div>
-
-                ${esOwner ? `
-                    <hr style="border-color:#444">
-                    <h3 style="color:#fbbf24">Herramientas OWNER</h3>
-                    <p>Control de cargos, permisos y administración general.</p>
-                ` : ""}
-                
-                <p style="color:#999;font-size:12px;margin-top:25px">
-                    NO ESCAPE · Centro de administración
-                </p>
+                ${Object.entries(SECTIONS).map(([key, label]) => `
+                    <div class="ne-card">
+                        ${label}: ${(content[key] || []).length} registros
+                    </div>
+                `).join("")}
             `;
+            return;
+        }
 
-            document.body.appendChild(panel);
+        const items = getItems();
 
-            document.getElementById("cerrarNoEscapePanel")
-                .addEventListener("click", () => panel.remove());
+        area.innerHTML = `
+            <h2>${SECTIONS[currentSection]}</h2>
 
-            panel.querySelectorAll("[data-tool]").forEach(boton => {
-                boton.addEventListener("click", () => {
-                    alert(
-                        "Sección seleccionada: " +
-                        boton.dataset.tool +
-                        ". Falta conectar esta herramienta."
-                    );
-                });
+            <form id="neForm">
+                <label>Título</label>
+                <input id="neTitle" maxlength="100" required
+                    placeholder="Escribe un título">
+
+                <label>Descripción o contenido</label>
+                <textarea id="neDescription" maxlength="5000" required
+                    placeholder="Escribe aquí..."></textarea>
+
+                <label>Imagen (URL opcional)</label>
+                <input id="neImage" type="url"
+                    placeholder="https://...">
+
+                <button class="ne-primary" type="submit">
+                    + Publicar contenido
+                </button>
+            </form>
+
+            <h3>Contenido creado (${items.length})</h3>
+
+            <div id="neItems">
+                ${items.map((item, index) => `
+                    <article class="ne-card">
+                        <h3>${escapeHTML(item.title)}</h3>
+                        <p>${escapeHTML(item.description)}</p>
+                        ${item.image ? `
+                            <img src="${escapeHTML(item.image)}"
+                                alt="" loading="lazy"
+                                style="max-width:100%;max-height:180px;border-radius:9px">
+                        ` : ""}
+                        <p class="ne-muted">
+                            Publicado por ${escapeHTML(item.author)}
+                        </p>
+                        <div class="ne-grid">
+                            <button data-edit="${index}">✏️ Editar</button>
+                            <button data-delete="${index}">🗑️ Eliminar</button>
+                        </div>
+                    </article>
+                `).join("") || "<p>Aún no hay contenido.</p>"}
+            </div>
+        `;
+
+        area.querySelector("#neForm").onsubmit = event => {
+            event.preventDefault();
+
+            const title = area.querySelector("#neTitle").value.trim();
+            const description = area.querySelector("#neDescription").value.trim();
+            const image = area.querySelector("#neImage").value.trim();
+
+            if (!title || !description) return;
+
+            items.push({
+                title,
+                description,
+                image,
+                author: currentUser.name,
+                date: new Date().toISOString()
             });
+
+            saveContent();
+            renderSection();
+        };
+
+        area.querySelectorAll("[data-delete]").forEach(button => {
+            button.onclick = () => {
+                const index = Number(button.dataset.delete);
+
+                if (!confirm("¿Eliminar este contenido?")) return;
+
+                items.splice(index, 1);
+                saveContent();
+                renderSection();
+            };
+        });
+
+        area.querySelectorAll("[data-edit]").forEach(button => {
+            button.onclick = () => {
+                const index = Number(button.dataset.edit);
+                const item = items[index];
+
+                const title = prompt("Nuevo título:", item.title);
+                if (title === null) return;
+
+                const description = prompt(
+                    "Nueva descripción:", item.description
+                );
+                if (description === null) return;
+
+                if (!title.trim() || !description.trim()) {
+                    alert("Completa el título y la descripción.");
+                    return;
+                }
+
+                item.title = title.trim();
+                item.description = description.trim();
+
+                saveContent();
+                renderSection();
+            };
         });
     }
 
-    iniciarPanelEspecial();
+    function start() {
+        const profile = getProfile();
+        if (!profile || !profile.username) return;
+
+        const username = String(profile.username).toLowerCase();
+        const role = ROLES[username];
+
+        if (!role) return;
+
+        currentUser = role;
+        createStyles();
+        addButton();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start);
+    } else {
+        start();
+    }
 })();
+           
+
+            
